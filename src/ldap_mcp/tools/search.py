@@ -37,7 +37,7 @@ def combine_filters(user_filter: str, default_filter: str) -> str:
     return f"(&{user_filter}{default_filter})"
 
 
-@tool
+@tool(timeout=60.0)
 async def ldap_search(
     ctx: Context,
     filter: Annotated[str, "LDAP filter (e.g., '(objectClass=person)')"],
