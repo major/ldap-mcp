@@ -10,9 +10,9 @@ MCP server for read-only LDAP directory operations.
 ## Installation
 
 ```bash
-pip install ldap-mcp
-# or
 uv add ldap-mcp
+# or
+pip install ldap-mcp
 ```
 
 ## Configuration
@@ -49,8 +49,14 @@ export LDAP_DEFAULT_FILTER="(!(employeeStatus=terminated))"
 Run the server:
 
 ```bash
-ldap-mcp                    # stdio transport (default)
-ldap-mcp --transport sse    # SSE transport
+uvx ldap-mcp                    # stdio transport (default)
+uvx ldap-mcp --transport sse    # SSE transport
+```
+
+Or if installed in a project:
+
+```bash
+uv run ldap-mcp
 ```
 
 ### Claude Desktop Configuration
@@ -61,7 +67,8 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "ldap": {
-      "command": "ldap-mcp",
+      "command": "uvx",
+      "args": ["ldap-mcp"],
       "env": {
         "LDAP_URI": "ldaps://ldap.example.com:636",
         "LDAP_BASE_DN": "dc=example,dc=com",
