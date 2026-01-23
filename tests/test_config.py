@@ -16,6 +16,12 @@ class TestLDAPMCPSettings:
         assert settings.ca_cert is None
         assert settings.tls_verify is True
         assert settings.timeout == 30
+        assert settings.default_filter == ""
+
+    def test_default_filter_setting(self) -> None:
+        settings = LDAPMCPSettings(default_filter="(!(status=terminated))")
+
+        assert settings.default_filter == "(!(status=terminated))"
 
     def test_is_anonymous_with_anonymous_method(self) -> None:
         settings = LDAPMCPSettings(auth_method=AuthMethod.ANONYMOUS)

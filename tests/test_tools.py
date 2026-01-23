@@ -12,7 +12,7 @@ from ldap_mcp.models import CompareResult, LDAPEntry, SchemaInfo, SearchResult
 from ldap_mcp.tools.compare import ldap_compare
 from ldap_mcp.tools.entry import ldap_get_entry
 from ldap_mcp.tools.schema import SchemaType, ldap_get_schema
-from ldap_mcp.tools.search import SearchScope, ldap_search
+from ldap_mcp.tools.search import SearchScope, combine_filters, ldap_search
 
 
 class TestLdapSearch:
@@ -108,6 +108,31 @@ class TestLdapSearch:
 
         assert result.total == 0
         assert result.entries == []
+
+    @pytest.mark.asyncio
+    async def test_search_applies_default_filter(
+        self, mock_ctx: MagicMock, mock_connection: MagicMock
+    ) -> None:
+        mock_ctx.request_context.lifespan_context.default_filter = "(!(status=terminated))"
+
+        await ldap_search(mock_ctx, filter="(objectClass=person)")
+
+        expected = "(&(objectClass=person)(!(status=terminated)))"
+        assert mock_connection.search.call_args.kwargs["search_filter"] == expected
+
+
+class TestCombineFilters:
+    @pytest.mark.parametrize(
+        ("user_filter", "default_filter", "expected"),
+        [
+            ("(cn=*)", "", "(cn=*)"),
+            ("(cn=*)", "(!(status=terminated))", "(&(cn=*)(!(status=terminated)))"),
+            ("(objectClass=person)", "(active=true)", "(&(objectClass=person)(active=true))"),
+        ],
+        ids=["no_default", "with_default", "complex"],
+    )
+    def test_combines_filters(self, user_filter: str, default_filter: str, expected: str) -> None:
+        assert combine_filters(user_filter, default_filter) == expected
 
 
 class TestLdapGetEntry:

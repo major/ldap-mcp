@@ -19,6 +19,7 @@ class AppContext:
 
     connection: Connection
     base_dn: str
+    default_filter: str = ""
 
 
 @asynccontextmanager
@@ -28,7 +29,11 @@ async def lifespan(mcp: "FastMCP") -> AsyncIterator[AppContext]:
     connection = create_connection(settings)
 
     try:
-        yield AppContext(connection=connection, base_dn=settings.base_dn)
+        yield AppContext(
+            connection=connection,
+            base_dn=settings.base_dn,
+            default_filter=settings.default_filter,
+        )
     finally:
         if connection.bound:
             connection.unbind()

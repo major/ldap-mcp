@@ -31,6 +31,13 @@ SCOPE_MAP = {
 DEFAULT_ATTRIBUTES = ["cn", "mail", "uid"]
 
 
+def combine_filters(user_filter: str, default_filter: str) -> str:
+    """Combine user filter with default filter using AND."""
+    if not default_filter:
+        return user_filter
+    return f"(&{user_filter}{default_filter})"
+
+
 async def ldap_search(
     ctx: Context,
     filter: Annotated[str, "LDAP filter (e.g., '(objectClass=person)')"],
@@ -55,11 +62,12 @@ async def ldap_search(
     app = get_app_context(ctx)
     search_base = base_dn or app.base_dn
     attrs = prepare_attributes(attributes, DEFAULT_ATTRIBUTES, include_operational)
+    search_filter = combine_filters(filter, app.default_filter)
 
     try:
         app.connection.search(
             search_base=search_base,
-            search_filter=filter,
+            search_filter=search_filter,
             search_scope=SCOPE_MAP[scope],
             attributes=attrs,
             size_limit=size_limit,

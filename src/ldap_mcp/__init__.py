@@ -21,6 +21,7 @@ Environment Variables:
   LDAP_CA_CERT          Path to CA certificate
   LDAP_TLS_VERIFY       Verify TLS certificates (default: true)
   LDAP_TIMEOUT          Connection timeout in seconds (default: 30)
+  LDAP_DEFAULT_FILTER   Filter ANDed to all searches (e.g., '(!(status=terminated))')
 
 Examples:
   ldap-mcp                         # Default stdio transport

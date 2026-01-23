@@ -49,6 +49,10 @@ class LDAPMCPSettings(BaseSettings):
     ca_cert: Path | None = Field(default=None, description="Path to CA certificate")
     tls_verify: bool = Field(default=True, description="Verify TLS certificates")
     timeout: int = Field(default=30, ge=1, description="Connection timeout in seconds")
+    default_filter: str = Field(
+        default="",
+        description="Default filter ANDed to all searches (e.g., '(!(employeeStatus=terminated))')",
+    )
 
     @property
     def is_anonymous(self) -> bool:

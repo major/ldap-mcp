@@ -80,7 +80,7 @@ def mock_connection(mock_entry: MagicMock, mock_schema: MagicMock) -> MagicMock:
 @pytest.fixture
 def mock_app_context(mock_connection: MagicMock) -> AppContext:
     """Create a mock AppContext with connection."""
-    return AppContext(connection=mock_connection, base_dn="dc=example,dc=com")
+    return AppContext(connection=mock_connection, base_dn="dc=example,dc=com", default_filter="")
 
 
 @pytest.fixture
