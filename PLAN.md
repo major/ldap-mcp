@@ -221,7 +221,7 @@ dev = [
 - [ ] `search_guide` — LDAP filter syntax help
 
 ### Phase 4: Polish
-- [ ] Comprehensive tests (mocked ldap3)
-- [ ] AGENTS.md (agent guidelines)
-- [ ] README.md with usage examples
-- [ ] CI workflow (.github/workflows/ci.yml)
+- [x] Comprehensive tests (mocked ldap3)
+- [x] AGENTS.md (agent guidelines)
+- [x] README.md with usage examples
+- [x] CI workflow (.github/workflows/ci.yml)
