@@ -1,78 +1,104 @@
-# Agent Guidelines for ldap-mcp
+# ldap-mcp
 
-## Project Overview
+**Commit:** d9e5863 | **Branch:** main
 
-MCP server providing read-only LDAP directory operations. Built with FastMCP, ldap3, and pydantic-settings.
+Read-only LDAP MCP server. FastMCP + ldap3 + pydantic-settings.
 
-## Architecture
+## Structure
 
 ```
 src/ldap_mcp/
-├── __init__.py       # CLI entry point (argparse)
-├── server.py         # FastMCP server + lifespan (AppContext)
-├── config.py         # LDAPMCPSettings (env vars)
-├── connection.py     # ldap3 connection factory
-├── errors.py         # ldap3 -> ToolError mapping
-├── models.py         # Pydantic response models
-├── tools/            # MCP tools (search, get_entry, schema, compare)
-└── prompts/          # MCP prompts (user_lookup, group_members, etc.)
+├── __init__.py       # CLI (argparse → create_server → run)
+├── server.py         # FastMCP + lifespan → AppContext
+├── config.py         # LDAPMCPSettings (LDAP_* env vars)
+├── connection.py     # ldap3 factory (TLS, auth, read_only=True)
+├── errors.py         # ldap3 exceptions → ToolError
+├── models.py         # Pydantic: LDAPEntry, SearchResult, SchemaInfo
+├── tools/
+│   ├── _context.py   # get_app_context(ctx) → AppContext
+│   ├── _helpers.py   # entry_to_model(), prepare_attributes()
+│   ├── search.py     # ldap_search + combine_filters()
+│   ├── entry.py      # ldap_get_entry
+│   ├── schema.py     # ldap_get_schema
+│   └── compare.py    # ldap_compare
+└── prompts/          # Guided workflows (user_lookup, group_*)
 ```
 
-## Key Patterns
+## Where to Look
 
-### Context Flow
+| Task | Location |
+|------|----------|
+| Add env config | `config.py` → add Field to LDAPMCPSettings |
+| Add new tool | `tools/` → new file + register in `tools/__init__.py` |
+| Add new prompt | `prompts/` → new file + register in `prompts/__init__.py` |
+| Map ldap3 error | `errors.py` → add case to handle_ldap_error() |
+| Modify search behavior | `tools/search.py` → combine_filters(), ldap_search() |
+
+## Context Flow
+
 ```
 lifespan() → AppContext(connection, base_dn, default_filter)
-    ↓
+     ↓
 get_app_context(ctx) → extracts from request_context.lifespan_context
-    ↓
-tools use app.connection, app.base_dn, app.default_filter
+     ↓
+tools use: app.connection, app.base_dn, app.default_filter
 ```
 
-### Error Handling
-All ldap3 exceptions are mapped to `ToolError` in `errors.py`. Tools catch exceptions and call `handle_ldap_error()`.
+## Anti-Patterns
 
-### Filter Combination
-User filters are combined with `default_filter` config using AND:
-```python
-combine_filters("(cn=*)", "(!(status=terminated))")
-# → "(&(cn=*)(!(status=terminated)))"
-```
+| ❌ NEVER | Why |
+|----------|-----|
+| Implement write operations | Read-only by design. `read_only=True` enforced in connection.py |
+| Use `from __future__ import annotations` in tools/prompts | Breaks FastMCP Annotated type evaluation at runtime |
+| Let ldap3 exceptions bubble up | Always use `handle_ldap_error(e, "operation")` |
+| Create connections in tools | Use `app.connection` from AppContext |
+| Skip filter combination | User filters must AND with `app.default_filter` |
 
-## Development Commands
+## Conventions
+
+| Pattern | Implementation |
+|---------|----------------|
+| Filter combination | `(&{user_filter}{default_filter})` via `combine_filters()` |
+| Tool error handling | `try: ... except Exception as e: raise handle_ldap_error(e, "op") from None` |
+| Private modules | Prefix with `_` (e.g., `_context.py`, `_helpers.py`) |
+| Async tools | All tools are `async def` even if sync internally |
+| Default search attrs | `["cn", "mail", "uid"]` — keep responses compact |
+
+## Testing
 
 ```bash
-make check      # lint + format-check + typecheck + test
-make test       # pytest with coverage
-make fix        # auto-fix lint issues
+make check   # lint + format + typecheck + test (95% coverage)
+make test    # pytest only
+make fix     # auto-fix lint/format
 ```
 
-## Testing Approach
+**Mocking pattern:**
+```python
+# Patch at module level, not ldap3 level
+with patch("ldap_mcp.connection.Server") as mock:
+    ...
+```
 
-- Mock ldap3 objects (Server, Connection, Entry)
-- Use `conftest.py` fixtures for shared mocks
-- Patch at the right level (e.g., `ldap_mcp.connection.Server`)
-- Test error paths with explicit exception types
+**Fixtures:** `tests/conftest.py` provides `mock_connection`, `mock_ctx`, `mock_entry`, `mock_schema`
 
-## Configuration (Environment Variables)
+## Config
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `LDAP_URI` | Yes | Server URI (ldap:// or ldaps://) |
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `LDAP_URI` | Yes | ldap:// or ldaps:// |
 | `LDAP_BASE_DN` | Yes | Default search base |
-| `LDAP_BIND_DN` | No | Bind DN (empty = anonymous) |
-| `LDAP_BIND_PASSWORD` | No | Bind password |
-| `LDAP_DEFAULT_FILTER` | No | Filter ANDed to all searches |
-| `LDAP_AUTH_METHOD` | No | `simple` or `anonymous` |
-| `LDAP_USE_STARTTLS` | No | Upgrade to TLS on port 389 |
-| `LDAP_TLS_VERIFY` | No | Verify TLS certs (default: true) |
-| `LDAP_CA_CERT` | No | Custom CA cert path |
-| `LDAP_TIMEOUT` | No | Connection timeout seconds |
+| `LDAP_BIND_DN` | No | Empty = anonymous |
+| `LDAP_DEFAULT_FILTER` | No | ANDed to all searches (e.g., `(!(status=terminated))`) |
+| `LDAP_USE_STARTTLS` | No | Upgrade plain → TLS |
+| `LDAP_TLS_VERIFY` | No | Default: true |
 
-## Read-Only Design
+## Tools (4 only)
 
-This server is intentionally read-only. No write operations are implemented. Tools:
-- `ldap_search` - Search with filters
-- `ldap_get_entry` - Get single entry by DN
-- `ldap_get_schema` - Browse schema
-- `ldap_compare` - Compare attribute value
+| Tool | Purpose |
+|------|---------|
+| `ldap_search` | Search with filters, returns summary |
+| `ldap_get_entry` | Get full entry by DN |
+| `ldap_get_schema` | Browse objectClasses/attributeTypes |
+| `ldap_compare` | Compare attribute value (returns bool) |
+
+Two-step workflow: `ldap_search` (find) → `ldap_get_entry` (details)
