@@ -1,8 +1,9 @@
 """LDAP filter syntax reference guide."""
 
-from __future__ import annotations
+from fastmcp.prompts import prompt
 
 
+@prompt
 def search_guide() -> str:
     """LDAP filter syntax reference with examples.
 

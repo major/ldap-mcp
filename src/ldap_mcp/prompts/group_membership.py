@@ -2,7 +2,10 @@
 
 from typing import Annotated
 
+from fastmcp.prompts import prompt
 
+
+@prompt
 def group_membership(
     user: Annotated[str, "Username, email, or DN of user to look up"],
 ) -> str:

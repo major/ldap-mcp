@@ -2,7 +2,10 @@
 
 from typing import Annotated
 
+from fastmcp.prompts import prompt
 
+
+@prompt
 def user_lookup(
     query: Annotated[str, "Name, email, or uid to search for"],
 ) -> str:

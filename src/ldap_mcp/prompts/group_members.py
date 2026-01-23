@@ -2,7 +2,10 @@
 
 from typing import Annotated
 
+from fastmcp.prompts import prompt
 
+
+@prompt
 def group_members(
     group: Annotated[str, "Group name or DN to look up"],
     resolve_names: Annotated[bool, "Resolve member DNs to display names"] = True,
