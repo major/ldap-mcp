@@ -13,7 +13,6 @@ class AuthMethod(str, Enum):
     """LDAP authentication methods."""
 
     SIMPLE = "simple"
-    GSSAPI = "gssapi"
     ANONYMOUS = "anonymous"
 
 

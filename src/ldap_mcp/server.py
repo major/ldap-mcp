@@ -18,7 +18,7 @@ class AppContext:
     """Typed application context for lifespan-managed resources."""
 
     connection: Connection
-    settings: LDAPMCPSettings
+    base_dn: str
 
 
 @asynccontextmanager
@@ -28,7 +28,7 @@ async def lifespan(mcp: "FastMCP") -> AsyncIterator[AppContext]:
     connection = create_connection(settings)
 
     try:
-        yield AppContext(connection=connection, settings=settings)
+        yield AppContext(connection=connection, base_dn=settings.base_dn)
     finally:
         if connection.bound:
             connection.unbind()

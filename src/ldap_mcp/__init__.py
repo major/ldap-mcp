@@ -16,7 +16,7 @@ Environment Variables:
   LDAP_BIND_DN          Bind DN for authentication (optional for anonymous)
   LDAP_BIND_PASSWORD    Bind password
   LDAP_BASE_DN          Default base DN for searches
-  LDAP_AUTH_METHOD      Auth method: simple, gssapi, anonymous (default: simple)
+  LDAP_AUTH_METHOD      Auth method: simple, anonymous (default: simple)
   LDAP_USE_STARTTLS     Use StartTLS on plain connection (default: false)
   LDAP_CA_CERT          Path to CA certificate
   LDAP_TLS_VERIFY       Verify TLS certificates (default: true)

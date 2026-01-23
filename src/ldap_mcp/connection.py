@@ -35,10 +35,12 @@ def create_connection(settings: "LDAPMCPSettings") -> Connection:
         connect_timeout=settings.timeout,
     )
 
+    auto_bind = AUTO_BIND_TLS_BEFORE_BIND if settings.use_starttls else True
+
     if settings.is_anonymous:
         return Connection(
             server,
-            auto_bind=AUTO_BIND_TLS_BEFORE_BIND if settings.use_starttls else True,
+            auto_bind=auto_bind,
             read_only=True,
             receive_timeout=settings.timeout,
         )
@@ -48,7 +50,7 @@ def create_connection(settings: "LDAPMCPSettings") -> Connection:
         user=settings.bind_dn,
         password=settings.bind_password,
         authentication=SIMPLE,
-        auto_bind=AUTO_BIND_TLS_BEFORE_BIND if settings.use_starttls else True,
+        auto_bind=auto_bind,
         read_only=True,
         receive_timeout=settings.timeout,
     )
