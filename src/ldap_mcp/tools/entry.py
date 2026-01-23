@@ -10,6 +10,7 @@ from ldap3 import BASE
 from ldap_mcp.errors import handle_ldap_error
 from ldap_mcp.models import LDAPEntry
 from ldap_mcp.tools._context import get_app_context
+from ldap_mcp.tools._helpers import entry_to_model, prepare_attributes
 
 
 async def ldap_get_entry(
@@ -30,10 +31,7 @@ async def ldap_get_entry(
     """
     app = get_app_context(ctx)
     conn = app.connection
-
-    attrs = attributes if attributes else ["*"]
-    if include_operational:
-        attrs = [*attrs, "+"]
+    attrs = prepare_attributes(attributes, ["*"], include_operational)
 
     try:
         conn.search(
@@ -50,8 +48,4 @@ async def ldap_get_entry(
 
         raise ToolError(f"Entry not found: {dn}")
 
-    entry = conn.entries[0]
-    return LDAPEntry(
-        dn=entry.entry_dn,
-        attributes={attr: [str(v) for v in entry[attr].values] for attr in entry.entry_attributes},
-    )
+    return entry_to_model(conn.entries[0])

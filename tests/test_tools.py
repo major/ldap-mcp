@@ -17,7 +17,9 @@ from ldap_mcp.tools.search import SearchScope, ldap_search
 
 class TestLdapSearch:
     @pytest.mark.asyncio
-    async def test_search_basic(self, mock_ctx: MagicMock, mock_connection: MagicMock) -> None:
+    async def test_search_returns_entries(
+        self, mock_ctx: MagicMock, mock_connection: MagicMock
+    ) -> None:
         result = await ldap_search(mock_ctx, filter="(objectClass=person)")
 
         assert isinstance(result, SearchResult)
@@ -27,26 +29,28 @@ class TestLdapSearch:
         mock_connection.search.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_search_with_custom_base_dn(
-        self, mock_ctx: MagicMock, mock_connection: MagicMock
+    @pytest.mark.parametrize(
+        ("base_dn", "expected"),
+        [
+            (None, "dc=example,dc=com"),
+            ("ou=admins,dc=example,dc=com", "ou=admins,dc=example,dc=com"),
+        ],
+        ids=["default", "custom"],
+    )
+    async def test_search_base_dn(
+        self,
+        mock_ctx: MagicMock,
+        mock_connection: MagicMock,
+        base_dn: str | None,
+        expected: str,
     ) -> None:
-        await ldap_search(mock_ctx, filter="(cn=*)", base_dn="ou=admins,dc=example,dc=com")
+        await ldap_search(mock_ctx, filter="(cn=*)", base_dn=base_dn)
 
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["search_base"] == "ou=admins,dc=example,dc=com"
-
-    @pytest.mark.asyncio
-    async def test_search_uses_default_base_dn(
-        self, mock_ctx: MagicMock, mock_connection: MagicMock
-    ) -> None:
-        await ldap_search(mock_ctx, filter="(cn=*)")
-
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["search_base"] == "dc=example,dc=com"
+        assert mock_connection.search.call_args.kwargs["search_base"] == expected
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ("scope", "expected_ldap3_scope"),
+        ("scope", "expected"),
         [
             (SearchScope.BASE, BASE),
             (SearchScope.ONE, LEVEL),
@@ -58,12 +62,11 @@ class TestLdapSearch:
         mock_ctx: MagicMock,
         mock_connection: MagicMock,
         scope: SearchScope,
-        expected_ldap3_scope: str,
+        expected: str,
     ) -> None:
         await ldap_search(mock_ctx, filter="(cn=*)", scope=scope)
 
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["search_scope"] == expected_ldap3_scope
+        assert mock_connection.search.call_args.kwargs["search_scope"] == expected
 
     @pytest.mark.asyncio
     async def test_search_with_attributes(
@@ -71,8 +74,11 @@ class TestLdapSearch:
     ) -> None:
         await ldap_search(mock_ctx, filter="(cn=*)", attributes=["cn", "mail", "telephoneNumber"])
 
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["attributes"] == ["cn", "mail", "telephoneNumber"]
+        assert mock_connection.search.call_args.kwargs["attributes"] == [
+            "cn",
+            "mail",
+            "telephoneNumber",
+        ]
 
     @pytest.mark.asyncio
     async def test_search_with_operational_attrs(
@@ -80,8 +86,7 @@ class TestLdapSearch:
     ) -> None:
         await ldap_search(mock_ctx, filter="(cn=*)", include_operational=True)
 
-        call_args = mock_connection.search.call_args
-        assert "+" in call_args.kwargs["attributes"]
+        assert "+" in mock_connection.search.call_args.kwargs["attributes"]
 
     @pytest.mark.asyncio
     async def test_search_with_limits(
@@ -89,9 +94,9 @@ class TestLdapSearch:
     ) -> None:
         await ldap_search(mock_ctx, filter="(cn=*)", size_limit=50, time_limit=30)
 
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["size_limit"] == 50
-        assert call_args.kwargs["time_limit"] == 30
+        call_kwargs = mock_connection.search.call_args.kwargs
+        assert call_kwargs["size_limit"] == 50
+        assert call_kwargs["time_limit"] == 30
 
     @pytest.mark.asyncio
     async def test_search_empty_results(
@@ -107,21 +112,15 @@ class TestLdapSearch:
 
 class TestLdapGetEntry:
     @pytest.mark.asyncio
-    async def test_get_entry_basic(self, mock_ctx: MagicMock, mock_connection: MagicMock) -> None:
+    async def test_get_entry_returns_entry(
+        self, mock_ctx: MagicMock, mock_connection: MagicMock
+    ) -> None:
         result = await ldap_get_entry(mock_ctx, dn="cn=jdoe,ou=users,dc=example,dc=com")
 
         assert isinstance(result, LDAPEntry)
         assert result.dn == "cn=jdoe,ou=users,dc=example,dc=com"
         assert "cn" in result.attributes
-
-    @pytest.mark.asyncio
-    async def test_get_entry_uses_base_scope(
-        self, mock_ctx: MagicMock, mock_connection: MagicMock
-    ) -> None:
-        await ldap_get_entry(mock_ctx, dn="cn=jdoe,ou=users,dc=example,dc=com")
-
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["search_scope"] == BASE
+        assert mock_connection.search.call_args.kwargs["search_scope"] == BASE
 
     @pytest.mark.asyncio
     async def test_get_entry_not_found(
@@ -142,8 +141,7 @@ class TestLdapGetEntry:
             include_operational=True,
         )
 
-        call_args = mock_connection.search.call_args
-        assert "+" in call_args.kwargs["attributes"]
+        assert "+" in mock_connection.search.call_args.kwargs["attributes"]
 
     @pytest.mark.asyncio
     async def test_get_entry_with_specific_attrs(
@@ -155,14 +153,16 @@ class TestLdapGetEntry:
             attributes=["cn", "mail"],
         )
 
-        call_args = mock_connection.search.call_args
-        assert call_args.kwargs["attributes"] == ["cn", "mail"]
+        assert mock_connection.search.call_args.kwargs["attributes"] == ["cn", "mail"]
 
 
 class TestLdapCompare:
     @pytest.mark.asyncio
-    async def test_compare_match(self, mock_ctx: MagicMock, mock_connection: MagicMock) -> None:
-        mock_connection.compare.return_value = True
+    @pytest.mark.parametrize("expected_match", [True, False], ids=["match", "no_match"])
+    async def test_compare_result(
+        self, mock_ctx: MagicMock, mock_connection: MagicMock, expected_match: bool
+    ) -> None:
+        mock_connection.compare.return_value = expected_match
 
         result = await ldap_compare(
             mock_ctx,
@@ -172,22 +172,9 @@ class TestLdapCompare:
         )
 
         assert isinstance(result, CompareResult)
-        assert result.match is True
+        assert result.match is expected_match
         assert result.dn == "cn=jdoe,ou=users,dc=example,dc=com"
         assert result.attribute == "uid"
-
-    @pytest.mark.asyncio
-    async def test_compare_no_match(self, mock_ctx: MagicMock, mock_connection: MagicMock) -> None:
-        mock_connection.compare.return_value = False
-
-        result = await ldap_compare(
-            mock_ctx,
-            dn="cn=jdoe,ou=users,dc=example,dc=com",
-            attribute="uid",
-            value="wrong",
-        )
-
-        assert result.match is False
 
     @pytest.mark.asyncio
     async def test_compare_calls_connection(
@@ -219,38 +206,48 @@ class TestLdapGetSchema:
         assert result.attribute_types[0].name == "cn"
 
     @pytest.mark.asyncio
-    async def test_get_schema_object_classes_only(self, mock_ctx: MagicMock) -> None:
-        result = await ldap_get_schema(mock_ctx, schema_type=SchemaType.OBJECT_CLASSES)
+    @pytest.mark.parametrize(
+        ("schema_type", "expected_oc_count", "expected_at_count"),
+        [
+            (SchemaType.OBJECT_CLASSES, 1, 0),
+            (SchemaType.ATTRIBUTE_TYPES, 0, 1),
+            (SchemaType.ALL, 1, 1),
+        ],
+    )
+    async def test_get_schema_by_type(
+        self,
+        mock_ctx: MagicMock,
+        schema_type: SchemaType,
+        expected_oc_count: int,
+        expected_at_count: int,
+    ) -> None:
+        result = await ldap_get_schema(mock_ctx, schema_type=schema_type)
 
-        assert len(result.object_classes) == 1
-        assert len(result.attribute_types) == 0
-
-    @pytest.mark.asyncio
-    async def test_get_schema_attribute_types_only(self, mock_ctx: MagicMock) -> None:
-        result = await ldap_get_schema(mock_ctx, schema_type=SchemaType.ATTRIBUTE_TYPES)
-
-        assert len(result.object_classes) == 0
-        assert len(result.attribute_types) == 1
-
-    @pytest.mark.asyncio
-    async def test_get_schema_with_name_filter(self, mock_ctx: MagicMock) -> None:
-        result = await ldap_get_schema(mock_ctx, name_filter="person")
-
-        assert len(result.object_classes) == 1
-        assert len(result.attribute_types) == 0
-
-    @pytest.mark.asyncio
-    async def test_get_schema_name_filter_case_insensitive(self, mock_ctx: MagicMock) -> None:
-        result = await ldap_get_schema(mock_ctx, name_filter="PERSON")
-
-        assert len(result.object_classes) == 1
+        assert len(result.object_classes) == expected_oc_count
+        assert len(result.attribute_types) == expected_at_count
 
     @pytest.mark.asyncio
-    async def test_get_schema_no_match(self, mock_ctx: MagicMock) -> None:
-        result = await ldap_get_schema(mock_ctx, name_filter="nonexistent")
+    @pytest.mark.parametrize(
+        ("name_filter", "expected_oc_count", "expected_at_count"),
+        [
+            ("person", 1, 0),
+            ("PERSON", 1, 0),
+            ("cn", 0, 1),
+            ("nonexistent", 0, 0),
+        ],
+        ids=["lowercase", "uppercase", "attribute", "no_match"],
+    )
+    async def test_get_schema_name_filter(
+        self,
+        mock_ctx: MagicMock,
+        name_filter: str,
+        expected_oc_count: int,
+        expected_at_count: int,
+    ) -> None:
+        result = await ldap_get_schema(mock_ctx, name_filter=name_filter)
 
-        assert len(result.object_classes) == 0
-        assert len(result.attribute_types) == 0
+        assert len(result.object_classes) == expected_oc_count
+        assert len(result.attribute_types) == expected_at_count
 
     @pytest.mark.asyncio
     async def test_get_schema_unavailable(

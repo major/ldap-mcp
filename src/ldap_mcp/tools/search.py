@@ -9,8 +9,9 @@ from fastmcp import Context
 from ldap3 import BASE, LEVEL, SUBTREE
 
 from ldap_mcp.errors import handle_ldap_error
-from ldap_mcp.models import LDAPEntry, SearchResult
+from ldap_mcp.models import SearchResult
 from ldap_mcp.tools._context import get_app_context
+from ldap_mcp.tools._helpers import entry_to_model, prepare_attributes
 
 
 class SearchScope(str, Enum):
@@ -53,10 +54,7 @@ async def ldap_search(
     """
     app = get_app_context(ctx)
     search_base = base_dn or app.base_dn
-    attrs = attributes or DEFAULT_ATTRIBUTES
-
-    if include_operational:
-        attrs = [*attrs, "+"]
+    attrs = prepare_attributes(attributes, DEFAULT_ATTRIBUTES, include_operational)
 
     try:
         app.connection.search(
@@ -70,14 +68,5 @@ async def ldap_search(
     except Exception as e:
         raise handle_ldap_error(e, "search") from None
 
-    entries = [
-        LDAPEntry(
-            dn=entry.entry_dn,
-            attributes={
-                attr: [str(v) for v in entry[attr].values] for attr in entry.entry_attributes
-            },
-        )
-        for entry in app.connection.entries
-    ]
-
+    entries = [entry_to_model(entry) for entry in app.connection.entries]
     return SearchResult(entries=entries, total=len(entries))
