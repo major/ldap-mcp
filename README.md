@@ -59,7 +59,8 @@ Or if installed in a project:
 uv run ldap-mcp
 ```
 
-### Claude Desktop
+<details>
+<summary>Claude Desktop</summary>
 
 Add to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`):
 
@@ -80,7 +81,10 @@ Add to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claud
 }
 ```
 
-### Claude Code
+</details>
+
+<details>
+<summary>Claude Code</summary>
 
 Add via CLI:
 
@@ -112,6 +116,33 @@ Or add to `.mcp.json` in your project root:
   }
 }
 ```
+
+</details>
+
+<details>
+<summary>OpenCode</summary>
+
+Add to `~/.config/opencode/config.json` (or `opencode.json` in project root):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "ldap": {
+      "type": "local",
+      "command": ["uvx", "ldap-mcp"],
+      "environment": {
+        "LDAP_URI": "ldaps://ldap.example.com:636",
+        "LDAP_BASE_DN": "dc=example,dc=com",
+        "LDAP_BIND_DN": "{env:LDAP_BIND_DN}",
+        "LDAP_BIND_PASSWORD": "{env:LDAP_BIND_PASSWORD}"
+      }
+    }
+  }
+}
+```
+
+</details>
 
 ## Tools
 
