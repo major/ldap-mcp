@@ -1,5 +1,10 @@
 # ldap-mcp
 
+[![CI](https://github.com/major/ldap-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/major/ldap-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ldap-mcp)](https://pypi.org/project/ldap-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/ldap-mcp)](https://pypi.org/project/ldap-mcp/)
+[![License](https://img.shields.io/pypi/l/ldap-mcp)](https://github.com/major/ldap-mcp/blob/main/LICENSE)
+
 MCP server for read-only LDAP directory operations.
 
 ## Installation
