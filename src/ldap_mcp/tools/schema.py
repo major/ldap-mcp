@@ -37,6 +37,8 @@ async def ldap_get_schema(
     """
     app = get_app_context(ctx)
 
+    await ctx.debug(f"Getting schema: {schema_type.value}")
+
     try:
         schema = app.connection.server.schema
     except Exception as e:

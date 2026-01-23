@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -88,4 +88,8 @@ def mock_ctx(mock_app_context: AppContext) -> MagicMock:
     """Create a mock FastMCP context."""
     ctx = MagicMock()
     ctx.lifespan_context = mock_app_context
+    ctx.debug = AsyncMock()
+    ctx.info = AsyncMock()
+    ctx.warning = AsyncMock()
+    ctx.error = AsyncMock()
     return ctx

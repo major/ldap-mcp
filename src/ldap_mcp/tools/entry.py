@@ -33,6 +33,8 @@ async def ldap_get_entry(
     conn = app.connection
     attrs = prepare_attributes(attributes, ["*"], include_operational)
 
+    await ctx.debug(f"Getting entry: {dn}")
+
     try:
         conn.search(
             search_base=dn,

@@ -24,6 +24,8 @@ async def ldap_compare(
     """
     app = get_app_context(ctx)
 
+    await ctx.debug(f"Comparing {attribute} for {dn}")
+
     try:
         result = app.connection.compare(dn, attribute, value)
     except Exception as e:

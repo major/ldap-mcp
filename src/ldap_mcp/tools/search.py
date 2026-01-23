@@ -64,6 +64,8 @@ async def ldap_search(
     attrs = prepare_attributes(attributes, DEFAULT_ATTRIBUTES, include_operational)
     search_filter = combine_filters(filter, app.default_filter)
 
+    await ctx.debug(f"Searching {search_base} with filter {search_filter}")
+
     try:
         app.connection.search(
             search_base=search_base,
@@ -77,4 +79,5 @@ async def ldap_search(
         raise handle_ldap_error(e, "search") from None
 
     entries = [entry_to_model(entry) for entry in app.connection.entries]
+    await ctx.info(f"Found {len(entries)} entries")
     return SearchResult(entries=entries, total=len(entries))
