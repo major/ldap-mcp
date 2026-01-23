@@ -25,8 +25,8 @@ export LDAP_BASE_DN="dc=example,dc=com"
 export LDAP_BIND_DN="cn=readonly,dc=example,dc=com"
 export LDAP_BIND_PASSWORD="secret"
 
-# Optional: filter out terminated employees from all searches
-export LDAP_DEFAULT_FILTER="(!(employeeStatus=terminated))"
+# Optional: only return employee accounts in all searches
+export LDAP_DEFAULT_FILTER="(employeeType=employee)"
 ```
 
 ### All Environment Variables
@@ -59,9 +59,9 @@ Or if installed in a project:
 uv run ldap-mcp
 ```
 
-### Claude Desktop Configuration
+### Claude Desktop
 
-Add to `claude_desktop_config.json`:
+Add to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`):
 
 ```json
 {
@@ -74,6 +74,39 @@ Add to `claude_desktop_config.json`:
         "LDAP_BASE_DN": "dc=example,dc=com",
         "LDAP_BIND_DN": "cn=readonly,dc=example,dc=com",
         "LDAP_BIND_PASSWORD": "secret"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+Add via CLI:
+
+```bash
+claude mcp add --transport stdio \
+  --env LDAP_URI=ldaps://ldap.example.com:636 \
+  --env LDAP_BASE_DN=dc=example,dc=com \
+  --env LDAP_BIND_DN=cn=readonly,dc=example,dc=com \
+  --env LDAP_BIND_PASSWORD=secret \
+  ldap -- uvx ldap-mcp
+```
+
+Or add to `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "ldap": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["ldap-mcp"],
+      "env": {
+        "LDAP_URI": "ldaps://ldap.example.com:636",
+        "LDAP_BASE_DN": "dc=example,dc=com",
+        "LDAP_BIND_DN": "${LDAP_BIND_DN}",
+        "LDAP_BIND_PASSWORD": "${LDAP_BIND_PASSWORD}"
       }
     }
   }
