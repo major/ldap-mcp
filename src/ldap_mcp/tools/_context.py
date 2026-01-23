@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from fastmcp import Context
@@ -11,17 +11,5 @@ if TYPE_CHECKING:
 
 
 def get_app_context(ctx: "Context") -> "AppContext":
-    """Extract AppContext from FastMCP context.
-
-    Raises:
-        RuntimeError: If context is not properly initialized.
-    """
-    request_context = ctx.request_context
-    if request_context is None:
-        raise RuntimeError("Request context not available")
-
-    lifespan_context = request_context.lifespan_context
-    if lifespan_context is None:
-        raise RuntimeError("Lifespan context not available")
-
-    return lifespan_context
+    """Extract AppContext from FastMCP context."""
+    return cast("AppContext", ctx.lifespan_context)

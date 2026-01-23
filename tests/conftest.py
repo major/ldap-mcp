@@ -87,5 +87,5 @@ def mock_app_context(mock_connection: MagicMock) -> AppContext:
 def mock_ctx(mock_app_context: AppContext) -> MagicMock:
     """Create a mock FastMCP context."""
     ctx = MagicMock()
-    ctx.request_context.lifespan_context = mock_app_context
+    ctx.lifespan_context = mock_app_context
     return ctx

@@ -113,7 +113,7 @@ class TestLdapSearch:
     async def test_search_applies_default_filter(
         self, mock_ctx: MagicMock, mock_connection: MagicMock
     ) -> None:
-        mock_ctx.request_context.lifespan_context.default_filter = "(!(status=terminated))"
+        mock_ctx.lifespan_context.default_filter = "(!(status=terminated))"
 
         await ldap_search(mock_ctx, filter="(objectClass=person)")
 
