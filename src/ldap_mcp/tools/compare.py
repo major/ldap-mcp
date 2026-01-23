@@ -3,12 +3,14 @@
 from typing import Annotated
 
 from fastmcp import Context
+from fastmcp.tools import tool
 
 from ldap_mcp.errors import handle_ldap_error
 from ldap_mcp.models import CompareResult
 from ldap_mcp.tools._context import get_app_context
 
 
+@tool
 async def ldap_compare(
     ctx: Context,
     dn: Annotated[str, "Distinguished Name of the entry"],

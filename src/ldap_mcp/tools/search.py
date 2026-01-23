@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Annotated
 
 from fastmcp import Context
+from fastmcp.tools import tool
 from ldap3 import BASE, LEVEL, SUBTREE
 
 from ldap_mcp.errors import handle_ldap_error
@@ -36,6 +37,7 @@ def combine_filters(user_filter: str, default_filter: str) -> str:
     return f"(&{user_filter}{default_filter})"
 
 
+@tool
 async def ldap_search(
     ctx: Context,
     filter: Annotated[str, "LDAP filter (e.g., '(objectClass=person)')"],

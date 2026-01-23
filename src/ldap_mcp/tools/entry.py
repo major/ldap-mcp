@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastmcp import Context
+from fastmcp.tools import tool
 from ldap3 import BASE
 
 from ldap_mcp.errors import handle_ldap_error
@@ -11,6 +12,7 @@ from ldap_mcp.tools._context import get_app_context
 from ldap_mcp.tools._helpers import entry_to_model, prepare_attributes
 
 
+@tool
 async def ldap_get_entry(
     ctx: Context,
     dn: Annotated[str, "Distinguished Name of the entry to retrieve"],

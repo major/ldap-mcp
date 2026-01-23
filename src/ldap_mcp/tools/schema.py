@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Annotated
 
 from fastmcp import Context
+from fastmcp.tools import tool
 
 from ldap_mcp.errors import handle_ldap_error
 from ldap_mcp.models import SchemaAttributeType, SchemaInfo, SchemaObjectClass
@@ -18,6 +19,7 @@ class SchemaType(str, Enum):
     ALL = "all"
 
 
+@tool
 async def ldap_get_schema(
     ctx: Context,
     schema_type: Annotated[
