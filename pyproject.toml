@@ -1,0 +1,92 @@
+[project]
+name = "ldap-mcp"
+version = "0.1.0"
+description = "MCP server for LDAP directory operations"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Major Hayden", email = "major@mhtx.net" }]
+requires-python = ">=3.13"
+keywords = ["mcp", "ldap", "directory", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
+    "Typing :: Typed",
+]
+dependencies = ["fastmcp>=3.0.0b1", "ldap3>=2.9", "pydantic-settings>=2.0.0"]
+
+[project.urls]
+Homepage = "https://github.com/major/ldap-mcp"
+Repository = "https://github.com/major/ldap-mcp"
+
+[project.scripts]
+ldap-mcp = "ldap_mcp:main"
+
+[build-system]
+requires = ["uv_build>=0.9.18"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=6",
+    "pytest-asyncio>=0.25",
+    "pytest-randomly>=4.0",
+    "ruff>=0.9",
+    "ty>=0.0.12",
+]
+
+[tool.uv.build-backend]
+module-name = "ldap_mcp"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC", "D"]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in __init__
+    "UP037", # Quoted type annotations - needed for FastMCP/Pydantic compatibility
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+addopts = "--cov=ldap_mcp --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/ldap_mcp"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.ty.environment]
+python-version = "3.14"
+python-platform = "linux"
+extra-paths = ["src"]
+
+[tool.pyright]
+pythonVersion = "3.14"
+pythonPlatform = "Linux"
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"
