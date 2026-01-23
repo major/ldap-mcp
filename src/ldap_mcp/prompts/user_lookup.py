@@ -1,7 +1,5 @@
 """User lookup prompt for guided user search workflow."""
 
-from __future__ import annotations
-
 from typing import Annotated
 
 

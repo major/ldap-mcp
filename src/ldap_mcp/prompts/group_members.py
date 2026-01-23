@@ -1,7 +1,5 @@
 """Group members prompt for listing members of an LDAP group."""
 
-from __future__ import annotations
-
 from typing import Annotated
 
 
