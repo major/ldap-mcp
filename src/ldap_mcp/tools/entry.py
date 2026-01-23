@@ -1,0 +1,57 @@
+"""LDAP get entry tool."""
+
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastmcp import Context
+from ldap3 import BASE
+
+from ldap_mcp.errors import handle_ldap_error
+from ldap_mcp.models import LDAPEntry
+from ldap_mcp.tools._context import get_app_context
+
+
+async def ldap_get_entry(
+    ctx: Context,
+    dn: Annotated[str, "Distinguished Name of the entry to retrieve"],
+    attributes: Annotated[
+        list[str] | None,
+        "Specific attributes to return (default: all user attributes)",
+    ] = None,
+    include_operational: Annotated[
+        bool,
+        "Include operational attributes (createTimestamp, modifyTimestamp, etc.)",
+    ] = False,
+) -> LDAPEntry:
+    """Get a single LDAP entry by DN with all attributes.
+
+    Use this after ldap_search to get full details of a specific entry.
+    """
+    app = get_app_context(ctx)
+    conn = app.connection
+
+    attrs = attributes if attributes else ["*"]
+    if include_operational:
+        attrs = [*attrs, "+"]
+
+    try:
+        conn.search(
+            search_base=dn,
+            search_filter="(objectClass=*)",
+            search_scope=BASE,
+            attributes=attrs,
+        )
+    except Exception as e:
+        raise handle_ldap_error(e, "get_entry") from None
+
+    if not conn.entries:
+        from fastmcp.exceptions import ToolError
+
+        raise ToolError(f"Entry not found: {dn}")
+
+    entry = conn.entries[0]
+    return LDAPEntry(
+        dn=entry.entry_dn,
+        attributes={attr: [str(v) for v in entry[attr].values] for attr in entry.entry_attributes},
+    )
